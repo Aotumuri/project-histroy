@@ -1,9 +1,10 @@
+import fs from "fs";
 import path from "path";
 import { formatError } from "../lib/errors";
 import {
   appendHistoryEntry,
-  ensureHistoryFile,
   findProjectRoot,
+  historyFilePath,
 } from "../lib/project";
 
 type RecordOptions = {
@@ -25,9 +26,12 @@ export function recordAction(opts: RecordOptions): void {
       : new Date().toISOString();
 
     const project = findProjectRoot(cwd);
-    const result = ensureHistoryFile(project.root);
+    const filePath = historyFilePath(project.root);
+    if (!fs.existsSync(filePath)) {
+      return;
+    }
 
-    appendHistoryEntry(result.path, {
+    appendHistoryEntry(filePath, {
       timestamp,
       command,
       cwd,
