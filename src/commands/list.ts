@@ -1,5 +1,6 @@
 import { spawnSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import readline from "readline";
 import { formatError } from "../lib/errors";
@@ -17,9 +18,14 @@ type ListOptions = {
   all?: boolean;
   root?: string;
   plain?: boolean;
+  full?: boolean;
 };
 
 const PAGE_SIZE = 10;
+type DisplayOptions = {
+  root: string;
+  full: boolean;
+};
 
 export function listAction(opts: ListOptions): void {
   try {
@@ -43,14 +49,15 @@ export function listAction(opts: ListOptions): void {
       process.stdin.isTTY && process.stdout.isTTY && !opts.plain,
     );
     const entries = resolveEntries(ordered, opts, interactive);
+    const display = { root: project.root, full: Boolean(opts.full) };
 
     if (interactive) {
-      runInteractiveList(entries);
+      runInteractiveList(entries, display);
       return;
     }
 
     for (const entry of entries) {
-      process.stdout.write(formatEntry(entry));
+      process.stdout.write(formatEntry(entry, display));
     }
   } catch (err) {
     console.error(formatError(err));
@@ -92,16 +99,19 @@ function parseLimit(value: unknown): number {
   return parsed;
 }
 
-function formatEntry(entry: HistoryEntry): string {
-  return `${entry.timestamp} | ${entry.cwd} | ${entry.command}\n`;
+function formatEntry(entry: HistoryEntry, display: DisplayOptions): string {
+  return `${formatEntryLine(entry, display)}\n`;
 }
 
-function runInteractiveList(entries: HistoryEntry[]): void {
+function runInteractiveList(
+  entries: HistoryEntry[],
+  display: DisplayOptions,
+): void {
   let page = 0;
   const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const stdin = process.stdin;
   const render = () => {
-    renderPage(entries, page);
+    renderPage(entries, page, display);
   };
 
   readline.emitKeypressEvents(stdin);
@@ -172,7 +182,11 @@ function getPageEntries(entries: HistoryEntry[], page: number): HistoryEntry[] {
   return entries.slice(start, start + PAGE_SIZE);
 }
 
-function renderPage(entries: HistoryEntry[], page: number): void {
+function renderPage(
+  entries: HistoryEntry[],
+  page: number,
+  display: DisplayOptions,
+): void {
   console.clear();
   const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const header = `ph list (${entries.length} entries) page ${
@@ -186,7 +200,7 @@ function renderPage(entries: HistoryEntry[], page: number): void {
   const width = Math.max(40, process.stdout.columns ?? 120);
   for (let i = 0; i < pageEntries.length; i += 1) {
     const label = indexLabel(i);
-    const line = `${label}) ${formatEntryLine(pageEntries[i])}`;
+    const line = `${label}) ${formatEntryLine(pageEntries[i], display)}`;
     process.stdout.write(`${truncate(line, width)}\n`);
   }
 }
@@ -223,8 +237,12 @@ function runEntry(entry: HistoryEntry): void {
   process.exit();
 }
 
-function formatEntryLine(entry: HistoryEntry): string {
-  return `${entry.timestamp} | ${entry.cwd} | ${entry.command}`;
+function formatEntryLine(entry: HistoryEntry, display: DisplayOptions): string {
+  const timestamp = display.full
+    ? entry.timestamp
+    : formatTimestamp(entry.timestamp);
+  const cwd = display.full ? entry.cwd : formatCwd(entry.cwd, display.root);
+  return `${timestamp} | ${cwd} | ${entry.command}`;
 }
 
 function truncate(value: string, width: number): string {
@@ -248,4 +266,38 @@ function indexLabel(index: number): string {
 
 function beep(): void {
   process.stdout.write("\u0007");
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const iso = date.toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)}Z`;
+}
+
+function formatCwd(cwd: string, root: string): string {
+  const resolved = path.resolve(cwd);
+  const relative = path.relative(root, resolved);
+
+  if (relative === "" || relative === ".") {
+    return ".";
+  }
+
+  if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
+    return `./${relative}`;
+  }
+
+  const home = os.homedir();
+  if (resolved === home) {
+    return "~";
+  }
+
+  if (resolved.startsWith(`${home}${path.sep}`)) {
+    return `~${resolved.slice(home.length)}`;
+  }
+
+  return resolved;
 }

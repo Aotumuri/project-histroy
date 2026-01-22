@@ -31,6 +31,7 @@ program
   .alias("l")
   .option("-n, --limit <number>", "Max entries to show")
   .option("--all", "Show all entries")
+  .option("--full", "Show full timestamp and absolute cwd")
   .option("--plain", "Print plain output instead of interactive")
   .option("-r, --root <path>", "Override project root")
   .action(listAction);
