@@ -21,8 +21,28 @@ export async function initAction(opts: InitOptions): Promise<void> {
   try {
     const startDir = opts.root ? path.resolve(opts.root) : process.cwd();
     const project = findProjectRoot(startDir);
-    const result = ensureHistoryFile(project.root);
+    const gitDir = resolveGitDir(project.root);
+    if (gitDir) {
+      const existing = readExcludeFile(gitDir);
+      if (!excludeHasEntry(existing, HISTORY_FILENAME)) {
+        const choice = await pickBox({
+          question: `Add ${HISTORY_FILENAME} to .git/info/exclude?`,
+          choices: {
+            y: { value: "Yes", description: "Ignore local history file" },
+            n: { value: "No", description: "Keep it tracked or decide later" },
+          },
+          defaultIndex: 0,
+          confirm: true,
+        });
 
+        if (choice.value === "Yes") {
+          appendExcludeEntry(gitDir, HISTORY_FILENAME);
+          console.log(`Added ${HISTORY_FILENAME} to .git/info/exclude`);
+        }
+      }
+    }
+
+    const result = ensureHistoryFile(project.root);
     if (result.created) {
       console.log(`Initialized ${result.path}`);
     } else {
@@ -43,7 +63,7 @@ export async function initAction(opts: InitOptions): Promise<void> {
             description: "Ignore ph/phi/phl/projh commands",
           },
         },
-        defaultIndex: 0,
+        defaultIndex: 1,
         confirm: true,
       });
 
@@ -52,31 +72,6 @@ export async function initAction(opts: InitOptions): Promise<void> {
         recordPhCommands: choice.value === "Yes",
       };
       writeHistoryFile(result.path, { ...history, settings });
-    }
-
-    const gitDir = resolveGitDir(project.root);
-    if (!gitDir) {
-      return;
-    }
-
-    const existing = readExcludeFile(gitDir);
-    if (excludeHasEntry(existing, HISTORY_FILENAME)) {
-      return;
-    }
-
-    const choice = await pickBox({
-      question: `Add ${HISTORY_FILENAME} to .git/info/exclude?`,
-      choices: {
-        y: { value: "Yes", description: "Ignore local history file" },
-        n: { value: "No", description: "Keep it tracked or decide later" },
-      },
-      defaultIndex: 0,
-      confirm: true,
-    });
-
-    if (choice.value === "Yes") {
-      appendExcludeEntry(gitDir, HISTORY_FILENAME);
-      console.log(`Added ${HISTORY_FILENAME} to .git/info/exclude`);
     }
   } catch (err) {
     console.error(formatError(err));
