@@ -1,0 +1,29 @@
+{
+  "name": "project-history",
+  "version": "0.1.0",
+  "description": "Simply manage project history",
+  "license": "MIT",
+  "author": "Aotumuri",
+  "type": "commonjs",
+  "main": "dist/cli.js",
+  "bin": {
+    "ph": "dist/cli.js",
+    "projh": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "cli-box-picker": "^0.6.2",
+    "commander": "^14.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "typescript": "^5.9.3"
+  }
+}
