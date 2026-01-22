@@ -50,6 +50,18 @@ export function buildZshHook(): string {
   return HOOK_LINES.join("\n");
 }
 
+export function hasZshHook(contents: string): boolean {
+  if (
+    contents.includes(HOOK_START) ||
+    contents.includes(LEGACY_MARKER_START) ||
+    contents.includes(LEGACY_HOOK_LINES[0])
+  ) {
+    return true;
+  }
+
+  return stripZshHook(contents).removed;
+}
+
 export function stripZshHook(contents: string): StripHookResult {
   let updated = contents;
   let removed = false;
