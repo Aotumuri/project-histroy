@@ -7,8 +7,10 @@ import {
   ensureHistoryFile,
   excludeHasEntry,
   findProjectRoot,
+  readHistoryFile,
   readExcludeFile,
   resolveGitDir,
+  writeHistoryFile,
 } from "../lib/project";
 
 type InitOptions = {
@@ -25,6 +27,31 @@ export async function initAction(opts: InitOptions): Promise<void> {
       console.log(`Initialized ${result.path}`);
     } else {
       console.log(`Found ${result.path}`);
+    }
+
+    const history = readHistoryFile(result.path);
+    if (history.settings?.recordPhCommands === undefined) {
+      const choice = await pickBox({
+        question: "Record ph commands in history?",
+        choices: {
+          y: {
+            value: "Yes",
+            description: "Keep ph/phi/phl/projh commands",
+          },
+          n: {
+            value: "No",
+            description: "Ignore ph/phi/phl/projh commands",
+          },
+        },
+        defaultIndex: 0,
+        confirm: true,
+      });
+
+      const settings = {
+        ...(history.settings ?? {}),
+        recordPhCommands: choice.value === "Yes",
+      };
+      writeHistoryFile(result.path, { ...history, settings });
     }
 
     const gitDir = resolveGitDir(project.root);

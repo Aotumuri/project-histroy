@@ -17,7 +17,8 @@ Run this in every project where you want history tracking.
 
 1. Initialize:
    `ph init` (or `phi`)
-2. If asked, choose whether to add `.projh.json` to `.git/info/exclude`.
+2. If asked, choose whether to record `ph` commands in history.
+3. If asked, choose whether to add `.projh.json` to `.git/info/exclude`.
 
 ## View history
 
@@ -39,6 +40,7 @@ Run this in every project where you want history tracking.
 - `ph init` initializes `.projh.json` and can add it to `.git/info/exclude`.
 - `ph record` is used by the shell hook to append entries.
 - `ph list` shows recent entries (newest first).
+- `ph reset` clears history entries after confirmation.
 - `phi` runs `ph init`.
 - `phl` runs `ph list`.
 - `ph hook` prints the zsh hook snippet.

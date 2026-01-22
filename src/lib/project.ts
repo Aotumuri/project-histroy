@@ -9,8 +9,13 @@ export type HistoryEntry = {
   cwd: string;
 };
 
+export type HistorySettings = {
+  recordPhCommands?: boolean;
+};
+
 export type HistoryFile = {
   version: 1;
+  settings?: HistorySettings;
   entries: HistoryEntry[];
 };
 
@@ -46,13 +51,16 @@ export function historyFilePath(root: string): string {
   return path.join(root, HISTORY_FILENAME);
 }
 
-export function ensureHistoryFile(root: string): { path: string; created: boolean } {
+export function ensureHistoryFile(
+  root: string,
+  settings?: HistorySettings,
+): { path: string; created: boolean } {
   const filePath = historyFilePath(root);
   if (fs.existsSync(filePath)) {
     return { path: filePath, created: false };
   }
 
-  writeHistoryFile(filePath, { version: 1, entries: [] });
+  writeHistoryFile(filePath, { version: 1, entries: [], settings });
   return { path: filePath, created: true };
 }
 
@@ -84,6 +92,9 @@ export function writeHistoryFile(filePath: string, data: HistoryFile): void {
 
 export function appendHistoryEntry(filePath: string, entry: HistoryEntry): void {
   const history = readHistoryFile(filePath);
+  if (!shouldRecordEntry(entry, history.settings)) {
+    return;
+  }
   history.entries.push(entry);
   writeHistoryFile(filePath, history);
 }
@@ -152,12 +163,17 @@ function normalizeHistory(value: unknown): HistoryFile {
     return { version: 1, entries: [] };
   }
 
-  const data = value as { version?: unknown; entries?: unknown };
+  const data = value as {
+    version?: unknown;
+    entries?: unknown;
+    settings?: unknown;
+  };
   const entries = Array.isArray(data.entries)
     ? data.entries.filter(isHistoryEntry)
     : [];
+  const settings = normalizeSettings(data.settings);
 
-  return { version: 1, entries };
+  return { version: 1, settings, entries };
 }
 
 function isHistoryEntry(value: unknown): value is HistoryEntry {
@@ -176,4 +192,69 @@ function isHistoryEntry(value: unknown): value is HistoryEntry {
     typeof entry.command === "string" &&
     typeof entry.cwd === "string"
   );
+}
+
+function normalizeSettings(value: unknown): HistorySettings | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const settings = value as { recordPhCommands?: unknown };
+  if (typeof settings.recordPhCommands === "boolean") {
+    return { recordPhCommands: settings.recordPhCommands };
+  }
+
+  return undefined;
+}
+
+function shouldRecordEntry(
+  entry: HistoryEntry,
+  settings?: HistorySettings,
+): boolean {
+  if (settings?.recordPhCommands === false && isPhCommand(entry.command)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isPhCommand(command: string): boolean {
+  const commandName = extractCommandName(command);
+  if (!commandName) {
+    return false;
+  }
+
+  const cleaned = stripCommandEscape(commandName);
+  const base = path.basename(cleaned);
+  return base === "ph" || base === "phi" || base === "phl" || base === "projh";
+}
+
+function extractCommandName(command: string): string | null {
+  const trimmed = command.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const tokens = trimmed.split(/\s+/);
+  for (const token of tokens) {
+    if (token === "sudo" || token === "command" || token === "env") {
+      continue;
+    }
+
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(token)) {
+      continue;
+    }
+
+    return token;
+  }
+
+  return null;
+}
+
+function stripCommandEscape(token: string): string {
+  if (token.startsWith("\\") && token.length > 1) {
+    return token.slice(1);
+  }
+
+  return token;
 }

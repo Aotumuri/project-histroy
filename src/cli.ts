@@ -4,6 +4,7 @@ import { hookAction } from "./commands/hook";
 import { initAction } from "./commands/init";
 import { listAction } from "./commands/list";
 import { recordAction } from "./commands/record";
+import { resetAction } from "./commands/reset";
 import { unhookAction } from "./commands/unhook";
 
 program
@@ -35,6 +36,12 @@ program
   .option("--plain", "Print plain output instead of interactive")
   .option("-r, --root <path>", "Override project root")
   .action(listAction);
+
+program
+  .command("reset")
+  .description("Clear history entries for the current project")
+  .option("-r, --root <path>", "Override project root")
+  .action(resetAction);
 
 program
   .command("hook")
