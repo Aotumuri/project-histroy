@@ -1,5 +1,5 @@
 {
-  "name": "project-history",
+  "name": "@aotumuri/project-history",
   "version": "0.1.0",
   "description": "Simply manage project history",
   "license": "MIT",
@@ -8,7 +8,8 @@
   "main": "dist/cli.js",
   "bin": {
     "ph": "dist/cli.js",
-    "projh": "dist/cli.js"
+    "phi": "dist/bin/phi.js",
+    "phl": "dist/bin/phl.js"
   },
   "files": [
     "dist",

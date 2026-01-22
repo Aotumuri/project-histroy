@@ -16,13 +16,13 @@ Do this once after installing the CLI.
 Run this in every project where you want history tracking.
 
 1. Initialize:
-   `ph init`
+   `ph init` (or `phi`)
 2. If asked, choose whether to add `.projh.json` to `.git/info/exclude`.
 
 ## View history
 
 - Interactive viewer (latest 10 per page):
-  `ph list` (or `ph l`)
+  `ph list` (or `ph l`, `phl`)
   - Press `1-9`/`0` to run a command
   - Use Left/Right arrows to move between pages
 - Plain output (latest 20):
@@ -37,6 +37,8 @@ Run this in every project where you want history tracking.
 - `ph init` initializes `.projh.json` and can add it to `.git/info/exclude`.
 - `ph record` is used by the shell hook to append entries.
 - `ph list` shows recent entries (newest first).
+- `phi` runs `ph init`.
+- `phl` runs `ph list`.
 - `ph hook` prints the zsh hook snippet.
 - `ph unhook` removes the hook from `~/.zshrc`.
 - `ph uninstall` is an alias of `ph unhook`.
