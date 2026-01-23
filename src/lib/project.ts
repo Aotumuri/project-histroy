@@ -99,6 +99,24 @@ export function appendHistoryEntry(filePath: string, entry: HistoryEntry): void 
   writeHistoryFile(filePath, history);
 }
 
+export function resolveHistoryCwd(value: string, root: string): string {
+  if (path.isAbsolute(value)) {
+    return path.resolve(value);
+  }
+
+  return path.resolve(root, value);
+}
+
+export function normalizeHistoryCwd(value: string, root: string): string {
+  const resolved = resolveHistoryCwd(value, root);
+  const relative = path.relative(root, resolved);
+  if (relative === "" || relative === ".") {
+    return ".";
+  }
+
+  return relative;
+}
+
 export function resolveGitDir(root: string): string | null {
   const gitPath = path.join(root, ".git");
   try {

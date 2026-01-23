@@ -10,7 +10,9 @@ import {
   ensureHistoryFile,
   findProjectRoot,
   historyFilePath,
+  normalizeHistoryCwd,
   readHistoryFile,
+  resolveHistoryCwd,
 } from "../lib/project";
 
 type ListOptions = {
@@ -169,7 +171,7 @@ function runInteractiveList(
       }
 
       cleanup();
-      runEntry(entry);
+      runEntry(entry, display.root);
     }
   };
 
@@ -205,14 +207,15 @@ function renderPage(
   }
 }
 
-function runEntry(entry: HistoryEntry): void {
+function runEntry(entry: HistoryEntry, root: string): void {
+  const resolvedCwd = resolveHistoryCwd(entry.cwd, root);
   try {
-    const project = findProjectRoot(entry.cwd);
+    const project = findProjectRoot(resolvedCwd);
     const result = ensureHistoryFile(project.root);
     appendHistoryEntry(result.path, {
       timestamp: new Date().toISOString(),
       command: entry.command,
-      cwd: entry.cwd,
+      cwd: normalizeHistoryCwd(resolvedCwd, project.root),
     });
   } catch (err) {
     console.error(formatError(err));
@@ -222,7 +225,7 @@ function runEntry(entry: HistoryEntry): void {
   const result = spawnSync(entry.command, {
     shell: true,
     stdio: "inherit",
-    cwd: entry.cwd,
+    cwd: resolvedCwd,
   });
 
   if (result.error) {
@@ -241,7 +244,9 @@ function formatEntryLine(entry: HistoryEntry, display: DisplayOptions): string {
   const timestamp = display.full
     ? entry.timestamp
     : formatTimestamp(entry.timestamp);
-  const cwd = display.full ? entry.cwd : formatCwd(entry.cwd, display.root);
+  const cwd = display.full
+    ? formatFullCwd(entry.cwd, display.root)
+    : formatCwd(entry.cwd, display.root);
   return `${timestamp} | ${cwd} | ${entry.command}`;
 }
 
@@ -279,7 +284,7 @@ function formatTimestamp(value: string): string {
 }
 
 function formatCwd(cwd: string, root: string): string {
-  const resolved = path.resolve(cwd);
+  const resolved = resolveHistoryCwd(cwd, root);
   const relative = path.relative(root, resolved);
 
   if (relative === "" || relative === ".") {
@@ -300,4 +305,12 @@ function formatCwd(cwd: string, root: string): string {
   }
 
   return resolved;
+}
+
+function formatFullCwd(cwd: string, root: string): string {
+  if (path.isAbsolute(cwd)) {
+    return cwd;
+  }
+
+  return formatCwd(cwd, root);
 }

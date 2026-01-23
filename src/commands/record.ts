@@ -5,6 +5,7 @@ import {
   appendHistoryEntry,
   findProjectRoot,
   historyFilePath,
+  normalizeHistoryCwd,
 } from "../lib/project";
 
 type RecordOptions = {
@@ -34,7 +35,7 @@ export function recordAction(opts: RecordOptions): void {
     appendHistoryEntry(filePath, {
       timestamp,
       command,
-      cwd,
+      cwd: normalizeHistoryCwd(cwd, project.root),
     });
   } catch (err) {
     console.error(formatError(err));

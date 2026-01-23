@@ -1,6 +1,6 @@
 # project-history
 
-Store per-project command history in `.projh.json`.
+Store per-project command history in `.projh.json` (cwd is stored relative to the project root).
 
 ## First-time setup (install once)
 
@@ -26,7 +26,7 @@ Run this in every project where you want history tracking.
   `ph list` (or `ph l`, `phl`)
   - Press `1-9`/`0` to run a command
   - Use Left/Right arrows to move between pages
-- Full output (absolute path + full ISO timestamp):
+- Full output (full ISO timestamp + recorded cwd):
   `ph list --full`
 - Plain output (latest 20):
   `ph list --plain`
