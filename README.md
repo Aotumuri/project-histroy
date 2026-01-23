@@ -17,8 +17,8 @@ Run this in every project where you want history tracking.
 
 1. Initialize:
    `ph init` (or `phi`)
-2. If asked, choose whether to record `ph` commands in history.
-3. If asked, choose whether to add `.projh.json` to `.git/info/exclude`.
+2. If asked, choose whether to add `.projh.json` to `.git/info/exclude`.
+3. If asked, choose whether to record `ph` commands in history.
 
 ## View history
 
