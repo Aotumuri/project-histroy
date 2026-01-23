@@ -3,12 +3,12 @@ import path from "path";
 import { formatError } from "../lib/errors";
 import {
   HISTORY_FILENAME,
-  appendExcludeEntry,
   ensureHistoryFile,
-  excludeHasEntry,
+  appendGitignoreEntry,
   findProjectRoot,
+  gitignoreHasEntry,
   readHistoryFile,
-  readExcludeFile,
+  readGitignoreFile,
   resolveGitDir,
   writeHistoryFile,
 } from "../lib/project";
@@ -23,10 +23,10 @@ export async function initAction(opts: InitOptions): Promise<void> {
     const project = findProjectRoot(startDir);
     const gitDir = resolveGitDir(project.root);
     if (gitDir) {
-      const existing = readExcludeFile(gitDir);
-      if (!excludeHasEntry(existing, HISTORY_FILENAME)) {
+      const existing = readGitignoreFile(project.root);
+      if (!gitignoreHasEntry(existing, HISTORY_FILENAME)) {
         const choice = await pickBox({
-          question: `Add ${HISTORY_FILENAME} to .git/info/exclude?`,
+          question: `Add ${HISTORY_FILENAME} to .gitignore?`,
           choices: {
             y: { value: "Yes", description: "Ignore local history file" },
             n: { value: "No", description: "Keep it tracked or decide later" },
@@ -36,8 +36,8 @@ export async function initAction(opts: InitOptions): Promise<void> {
         });
 
         if (choice.value === "Yes") {
-          appendExcludeEntry(gitDir, HISTORY_FILENAME);
-          console.log(`Added ${HISTORY_FILENAME} to .git/info/exclude`);
+          appendGitignoreEntry(project.root, HISTORY_FILENAME);
+          console.log(`Added ${HISTORY_FILENAME} to .gitignore`);
         }
       }
     }

@@ -142,10 +142,10 @@ export function resolveGitDir(root: string): string | null {
   return null;
 }
 
-export function readExcludeFile(gitDir: string): string {
-  const excludePath = path.join(gitDir, "info", "exclude");
+export function readGitignoreFile(root: string): string {
+  const gitignorePath = path.join(root, ".gitignore");
   try {
-    return fs.readFileSync(excludePath, "utf8");
+    return fs.readFileSync(gitignorePath, "utf8");
   } catch (err) {
     const error = err as NodeJS.ErrnoException;
     if (error.code === "ENOENT") {
@@ -155,25 +155,25 @@ export function readExcludeFile(gitDir: string): string {
   }
 }
 
-export function excludeHasEntry(excludeContents: string, entry: string): boolean {
-  return excludeContents
+export function gitignoreHasEntry(
+  gitignoreContents: string,
+  entry: string,
+): boolean {
+  return gitignoreContents
     .split(/\r?\n/)
     .some((line) => line.trim() === entry);
 }
 
-export function appendExcludeEntry(gitDir: string, entry: string): void {
-  const infoDir = path.join(gitDir, "info");
-  fs.mkdirSync(infoDir, { recursive: true });
-
-  const excludePath = path.join(infoDir, "exclude");
-  const existing = readExcludeFile(gitDir);
-  if (excludeHasEntry(existing, entry)) {
+export function appendGitignoreEntry(root: string, entry: string): void {
+  const gitignorePath = path.join(root, ".gitignore");
+  const existing = readGitignoreFile(root);
+  if (gitignoreHasEntry(existing, entry)) {
     return;
   }
 
   const needsNewline = existing.length > 0 && !existing.endsWith("\n");
   const prefix = existing.length === 0 ? "" : needsNewline ? "\n" : "";
-  fs.appendFileSync(excludePath, `${prefix}${entry}\n`, "utf8");
+  fs.appendFileSync(gitignorePath, `${prefix}${entry}\n`, "utf8");
 }
 
 function normalizeHistory(value: unknown): HistoryFile {
