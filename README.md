@@ -1,6 +1,6 @@
 # project-history
 
-Store per-project command history in `.projh.json` (cwd is stored relative to the project root).
+Store per-project command history in `.projh.json` (cwd is stored relative to the project root). Keep this file private and out of version control.
 
 ## First-time setup (install once)
 
@@ -17,7 +17,7 @@ Run this in every project where you want history tracking.
 
 1. Initialize:
    `ph init` (or `phi`)
-2. If asked, choose whether to add `.projh.json` to `.gitignore`.
+2. If asked, choose whether to add `.projh.json` to `.gitignore` (recommended so it is not published).
 3. If asked, choose whether to record `ph` commands in history.
 
 ## View history
